@@ -11,6 +11,7 @@ __dummy_cmd_out=.__dummy_cmd_out
 __dummy_debug=0
 __dummy_debug_out=.__dummy_debug_out
 __dummy_verbose=0
+__dummy_verbose_out=.__dummy_verbose_out
 __dummy_nocolor=0
 __dummy_tests=0
 __dummy_failed_tests=0
@@ -29,21 +30,59 @@ cmd() {
 assert_rc() {
   if [ $__dummy_cmd_rc -ne $1 ]; then
     if [ $__dummy_verbose -eq 1 ]; then
-      echo "expecting return code '${1}'"
-      echo "got return code '${__dummy_cmd_rc}'"
+      __dummy_write_verbose "expecting return code '${1}'"
+      __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
     fi
-    return $__dummy_cmd_rc
+    return 1
   fi
+  return 0
+}
+
+assert_rc_not() {
+  if [ $__dummy_cmd_rc -eq $1 ]; then
+    if [ $__dummy_verbose -eq 1 ]; then
+      __dummy_write_verbose "expecting return code to not be '${1}'"
+      __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
+    fi
+    return 1
+  fi
+  return 0
 }
 
 assert_content() {
-  grep "${1}" ${__dummy_cmd_out}
-  return $?
+  grep -- "${1}" ${__dummy_cmd_out}
+  local rc=$?
+  if [ $rc -ne 0 ]; then
+    __dummy_write_verbose "Content '${1}' not found in output"
+  fi
+  return $rc
+}
+
+assert_content_not() {
+  ! grep -- "${1}" ${__dummy_cmd_out}
+  local rc=$?
+  if [ $rc -ne 0 ]; then
+    __dummy_write_verbose "Content '${1}' not found in output"
+  fi
+  return $rc
 }
 
 assert_regex() {
-  grep -E "${1}" ${__dummy_cmd_out}
-  return $?
+  grep -E -- "${1}" ${__dummy_cmd_out}
+  local rc=$?
+  if [ $rc -ne 0 ]; then
+    __dummy_write_verbose "Content '${1}' not found in output"
+  fi
+  return $rc
+}
+
+assert_regex_not() {
+  ! grep -E -- "${1}" ${__dummy_cmd_out}
+  local rc=$?
+  if [ $rc -ne 0 ]; then
+    __dummy_write_verbose "Content '${1}' not found in output"
+  fi
+  return $rc
 }
 
 # private functions
@@ -67,13 +106,22 @@ __dummy_error() {
   exit 1
 }
 
+__dummy_write_verbose() {
+  echo "$1" >> $__dummy_verbose_out
+}
+
 __dummy_print_status() {
   case $2 in
     PASS) s="${__dummy_green}PASS${__dummy_clear}";;
     FAIL) s="${__dummy_red}FAIL${__dummy_clear}";;
     *)    s="????";;
   esac
-  printf "  %-52s [${s}]\n" "$1"
+  printf "  %-52s [${s}]\n" "${1//_/ }"
+  if [ $__dummy_verbose -eq 1 ]; then
+    while read output; do
+      echo "    ${output}";
+    done < $__dummy_verbose_out
+  fi
   if [[ $2 == "FAIL" ]]; then
     if [ $__dummy_debug -eq 1 ]; then
       while read output; do
@@ -97,6 +145,7 @@ __dummy_run_test() {
   __dummy_cmd_rc=0
   > $__dummy_cmd_out
   > $__dummy_debug_out
+  > $__dummy_verbose_out
   set +e
   (
     set -ex
@@ -112,6 +161,7 @@ __dummy_run_test() {
   fi
   let __dummy_tests+=1
   [ -f $__dummy_debug_out ] && rm $__dummy_debug_out
+  [ -f $__dummy_verbose_out ] && rm $__dummy_verbose_out
 }
 
 # allow for sourcing
