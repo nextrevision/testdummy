@@ -26,6 +26,24 @@ Take a look at the example script and testfile in `examples/`. It can be
 run with the following command:
 
     ./testdummy examples/myscript-test.sh
+    
+Results in the following output:
+
+    test functions
+        test main function with no args                    [PASS]
+        test main function args                            [PASS]
+        test error function                                [PASS]
+        test usage function                                [PASS]
+
+    test runtime execution
+        test myscript with no args                         [PASS]
+        test myscript with args                            [PASS]
+
+    failing functions
+        test myscript with args failure                    [FAIL]
+        test myscript mode                                 [FAIL]
+    -------------------------------------------------------------
+    Tests:    8  |  Passed:    6  |  Failed:    2  |  Time:    0s
 
 ## Writing Tests
 
