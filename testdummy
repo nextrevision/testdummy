@@ -7,11 +7,11 @@ __dummy_red='\033[0;31m'
 __dummy_green='\033[0;32m'
 __dummy_clear='\033[0m'
 __dummy_cmd_rc=0
-__dummy_cmd_out=.__dummy_cmd_out
+__dummy_cmd_out=$(mktemp -t dummy_cmd_out.XXXXXX)
 __dummy_debug=0
-__dummy_debug_out=.__dummy_debug_out
+__dummy_debug_out=$(mktemp -t dummy_debug_out.XXXXXX)
 __dummy_verbose=0
-__dummy_verbose_out=.__dummy_verbose_out
+__dummy_verbose_out=$(mktemp -t dummy_verbose_out.XXXXXX)
 __dummy_nocolor=0
 __dummy_tests=0
 __dummy_failed_tests=0
@@ -29,10 +29,8 @@ cmd() {
 
 assert_rc() {
   if [ $__dummy_cmd_rc -ne $1 ]; then
-    if [ $__dummy_verbose -eq 1 ]; then
-      __dummy_write_verbose "expecting return code '${1}'"
-      __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
-    fi
+    __dummy_write_verbose "expecting return code '${1}'"
+    __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
     return 1
   fi
   return 0
@@ -40,10 +38,8 @@ assert_rc() {
 
 assert_rc_not() {
   if [ $__dummy_cmd_rc -eq $1 ]; then
-    if [ $__dummy_verbose -eq 1 ]; then
-      __dummy_write_verbose "expecting return code to not be '${1}'"
-      __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
-    fi
+    __dummy_write_verbose "expecting return code to not be '${1}'"
+    __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
     return 1
   fi
   return 0
@@ -53,7 +49,7 @@ assert_content() {
   grep -- "${1}" ${__dummy_cmd_out}
   local rc=$?
   if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "Content '${1}' not found in output"
+    __dummy_write_verbose "content '${1}' not found in output"
   fi
   return $rc
 }
@@ -62,7 +58,7 @@ assert_content_not() {
   ! grep -- "${1}" ${__dummy_cmd_out}
   local rc=$?
   if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "Content '${1}' not found in output"
+    __dummy_write_verbose "content '${1}' found in output"
   fi
   return $rc
 }
@@ -71,7 +67,7 @@ assert_regex() {
   grep -E -- "${1}" ${__dummy_cmd_out}
   local rc=$?
   if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "Content '${1}' not found in output"
+    __dummy_write_verbose "content '${1}' not found in output"
   fi
   return $rc
 }
@@ -80,14 +76,14 @@ assert_regex_not() {
   ! grep -E -- "${1}" ${__dummy_cmd_out}
   local rc=$?
   if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "Content '${1}' not found in output"
+    __dummy_write_verbose "content '${1}' found in output"
   fi
   return $rc
 }
 
 # private functions
 __dummy_usage() {
-  echo "usage: $0 [args] specfile"
+  echo "usage: $0 [args] testfile"
   echo
   echo "-h|--help     Help"
   echo "-d|--debug    Enabled debug logging"
@@ -107,7 +103,7 @@ __dummy_error() {
 }
 
 __dummy_write_verbose() {
-  echo "$1" >> $__dummy_verbose_out
+  [ $__dummy_verbose -eq 1 ] && echo "$1" >> $__dummy_verbose_out
 }
 
 __dummy_print_status() {
@@ -164,8 +160,7 @@ __dummy_run_test() {
   [ -f $__dummy_verbose_out ] && rm $__dummy_verbose_out
 }
 
-# allow for sourcing
-if [[ $(basename ${0//-/}) == "testdummy" ]]; then
+__dummy_main() {
   # parse cli args
   until [ -z $1 ]; do
     case $1 in
@@ -196,14 +191,13 @@ if [[ $(basename ${0//-/}) == "testdummy" ]]; then
 
   # call the spec functions
   while read line; do
-    if echo $line | grep -q '^it_'; then
-      t=$(echo $line | cut -d'(' -f1)
-      if grep -B1 $t ${__dummy_specfile} | grep -q '^describe '; then
-        eval $(grep -B1 $t ${__dummy_specfile} | grep '^describe ')
-      elif grep -B1 $t ${__dummy_specfile} | grep -q '^$'; then
-        echo
-      fi
-      __dummy_run_test "${t}"
+    if echo $line | grep -E -q '^(it|do|test)_'; then
+      local __func=$(echo $line | cut -d'(' -f1)
+      __dummy_run_test "${__func}"
+    elif echo $line | grep -E -q '^describe '; then
+      eval $line
+    elif echo $line | grep -E -q '^$'; then
+      echo
     fi
   done < ${__dummy_specfile}
 
@@ -212,4 +206,9 @@ if [[ $(basename ${0//-/}) == "testdummy" ]]; then
 
   # exit if failed tests
   [ $__dummy_failed_tests -eq 0 ] || exit 1
+}
+
+# allow for sourcing
+if [[ $(basename ${0//-/}) == "testdummy" ]]; then
+  __dummy_main "$@"
 fi
