@@ -186,6 +186,9 @@ __dummy_main() {
   [ -f ${__dummy_specfile} ] || __dummy_error "No such file ${__dummy_specfile}"
   [ -r ${__dummy_specfile} ] || __dummy_error "Cannot read ${__dummy_specfile}"
 
+  cd $(dirname ${__dummy_specfile})
+  __dummy_specfile=$(basename ${__dummy_specfile})
+
   # source the spec functions
   source ${__dummy_specfile} 2>&1 > /dev/null
 

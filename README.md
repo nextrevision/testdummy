@@ -20,6 +20,13 @@ A shell script testing framework
     --nocolor     Disable color output
     --version     Prints the version and exits
 
+## Examples
+
+Take a look at the example script and testfile in `examples/`. It can be
+run with the following command:
+
+    ./testdummy examples/myscript-test.sh
+
 ## Writing Tests
 
 Tests can be stored in any file, so long as that file can be read by the user
