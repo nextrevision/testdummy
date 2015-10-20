@@ -36,47 +36,11 @@ assert_rc() {
   return 0
 }
 
-assert_rc_not() {
-  if [ $__dummy_cmd_rc -eq $1 ]; then
-    __dummy_write_verbose "expecting return code to not be '${1}'"
-    __dummy_write_verbose "got return code '${__dummy_cmd_rc}'"
-    return 1
-  fi
-  return 0
-}
-
 assert_content() {
-  grep -- "${1}" ${__dummy_cmd_out}
-  local rc=$?
-  if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "content '${1}' not found in output"
-  fi
-  return $rc
-}
-
-assert_content_not() {
-  ! grep -- "${1}" ${__dummy_cmd_out}
-  local rc=$?
-  if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "content '${1}' found in output"
-  fi
-  return $rc
-}
-
-assert_regex() {
   grep -E -- "${1}" ${__dummy_cmd_out}
   local rc=$?
   if [ $rc -ne 0 ]; then
     __dummy_write_verbose "content '${1}' not found in output"
-  fi
-  return $rc
-}
-
-assert_regex_not() {
-  ! grep -E -- "${1}" ${__dummy_cmd_out}
-  local rc=$?
-  if [ $rc -ne 0 ]; then
-    __dummy_write_verbose "content '${1}' found in output"
   fi
   return $rc
 }

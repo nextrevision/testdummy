@@ -152,29 +152,11 @@ Example:
       assert_rc 1
     }
 
-#### `assert_rc_not <int>`
-
-Asserts that the command executed by the `cmd` function does not match the
-given return code. If the code **does** match, the test function will **fail**.
-
-Example:
-
-    describe "passing test"
-    test_echo_function() {
-      cmd "echo 'this will pass'"
-      assert_rc_not 1
-    }
-    describe "failing test"
-    test_false_function() {
-      cmd "/bin/false"
-      assert_rc_not 0
-    }
-
 #### `assert_content "<string>"`
 
 Asserts that the output of the command executed by the `cmd` function contains
 the content of `<string>`. If the output does not, then the test function will
-fail.
+fail. The contents of `<string>` can also be a regex pattern.
 
 Example:
 
@@ -182,68 +164,12 @@ Example:
     test_echo_function() {
       cmd "echo 'this will pass'"
       assert_content "will pass"
+      assert_content '^this\s\w+'
     }
     describe "failing test"
     test_false_function() {
       cmd "echo 'this will fail'"
       assert_content "banana"
-    }
-
-#### `assert_content_not "<string>"`
-
-Asserts that the output of the command executed by the `cmd` function does not
-contain the content of `<string>`. If the output does, then the test function
-will fail.
-
-Example:
-
-    describe "passing test"
-    test_echo_function() {
-      cmd "echo 'this will pass'"
-      assert_content_not "banana"
-    }
-    describe "failing test"
-    test_false_function() {
-      cmd "echo 'this will fail'"
-      assert_content_not "will fail"
-    }
-
-#### `assert_regex "<expression>"`
-
-Asserts that the output of the command executed by the `cmd` function matches
-the expression supplied in `<expression>`. If the output does, then the test
-function will pass.
-
-Example:
-
-    describe "passing test"
-    test_echo_function() {
-      cmd "echo 'this will pass'"
-      assert_regex '^this will pass$'
-    }
-    describe "failing test"
-    test_false_function() {
-      cmd "echo 'this will fail'"
-      assert_regex '^will fail$'
-    }
-
-#### `assert_regex_not "<expression>"`
-
-Asserts that the output of the command executed by the `cmd` function does not
-match the expression supplied in `<expression>`. If the output does, then the
-test function will fail.
-
-Example:
-
-    describe "passing test"
-    test_echo_function() {
-      cmd "echo 'this will pass'"
-      assert_regex_not '^will pass$'
-    }
-    describe "failing test"
-    test_false_function() {
-      cmd "echo 'this will fail'"
-      assert_regex_not '^this will fail$'
     }
 
 #### Custom
